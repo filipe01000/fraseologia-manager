@@ -1,4 +1,4 @@
-# 🎨 Gerenciador de Fraseologias - Versão Melhorada
+# 🎨 Gerenciador de Fraseologias
 
 ## 📋 Descrição
 
