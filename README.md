@@ -288,10 +288,10 @@ Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para ma
 
 ## 👤 Autor
 
-**Seu Nome**
+**Filipe Rodrigues**
 
-- GitHub: [@seu-usuario](https://github.com/seu-usuario)
-- LinkedIn: [Seu Nome](https://linkedin.com/in/seu-perfil)
+- GitHub: [@filipe01000](https://github.com/filipe01000)
+- LinkedIn: [Seu Nome](https://www.linkedin.com/in/filipeaugusto29/)
 
 ---
 
@@ -308,7 +308,7 @@ Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para ma
 
 Se você encontrar algum problema ou tiver sugestões:
 
-- Abra uma [issue](https://github.com/seu-usuario/gerenciador-fraseologias/issues)
+- Abra uma [issue](https://github.com/filipe01000/fraseologia-manager/issues)
 - Entre em contato via LinkedIn
 
 ---
