@@ -291,7 +291,7 @@ Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para ma
 **Filipe Rodrigues**
 
 - GitHub: [@filipe01000](https://github.com/filipe01000)
-- LinkedIn: [Seu Nome](https://www.linkedin.com/in/filipeaugusto29/)
+- LinkedIn: [Filipe Rodrigues](https://www.linkedin.com/in/filipeaugusto29/)
 
 ---
 
