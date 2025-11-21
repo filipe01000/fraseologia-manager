@@ -1,0 +1,202 @@
+{% extends "base.html" %}
+
+{% block title %}
+    {{ titulo }} - Gerenciador de Fraseologias
+{% endblock %}
+
+{% block page_title %}
+    <i class="bi bi-pencil-square me-2"></i>{{ titulo }}
+{% endblock %}
+
+{% block content %}
+    <div class="row fade-in">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header" style="background: var(--primary-gradient); color: white;">
+                    <h5 class="mb-0">
+                        <i class="bi bi-file-earmark-text me-2"></i>
+                        Dados da Fraseologia
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" id="fraseologia-form">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label for="titulo" class="form-label">
+                                <i class="bi bi-tag-fill me-1"></i>
+                                Título
+                            </label>
+                            <input type="text" class="form-control" id="titulo" name="titulo" 
+                                   value="{% if fraseologia %}{{ fraseologia.titulo }}{% endif %}" 
+                                   required style="background: var(--card-color); color: var(--text-color); border-color: var(--border-color);">
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="categoria" class="form-label">
+                                <i class="bi bi-folder-fill me-1"></i>
+                                Categoria
+                            </label>
+                            <select class="form-select" id="categoria" name="categoria" required 
+                                    style="background: var(--card-color); color: var(--text-color); border-color: var(--border-color);">
+                                <option value="">Selecione uma categoria</option>
+                                {% for cat in categorias %}
+                                    <option value="{{ cat.pk }}" {% if fraseologia and fraseologia.categoria.pk == cat.pk %}selected{% endif %}>
+                                        {{ cat.nome }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="conteudo_template" class="form-label">
+                                <i class="bi bi-code-slash me-1"></i>
+                                Conteúdo do Template
+                            </label>
+                            <textarea class="form-control" id="conteudo_template" name="conteudo_template" 
+                                      rows="12" required 
+                                      style="font-family: 'Courier New', monospace; background: var(--card-color); color: var(--text-color); border-color: var(--border-color);">{% if fraseologia %}{{ fraseologia.conteudo_template }}{% endif %}</textarea>
+                            <small class="form-text text-muted">
+                                <i class="bi bi-info-circle me-1"></i>
+                                Use variáveis Django template: {% verbatim %}{{ variavel }}{% endverbatim %}
+                            </small>
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-gradient">
+                                <i class="bi bi-save-fill me-1"></i>
+                                Salvar
+                            </button>
+                            <a href="{% url 'frases:lista_fraseologias' %}" class="btn btn-outline-secondary">
+                                <i class="bi bi-x-circle me-1"></i>
+                                Cancelar
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header" style="background: var(--secondary-gradient); color: white;">
+                    <h5 class="mb-0">
+                        <i class="bi bi-eye-fill me-2"></i>
+                        Preview ao Vivo
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div id="preview-container" style="background: var(--bg-color); padding: 15px; border-radius: 8px; min-height: 200px; color: var(--text-color); white-space: pre-wrap; font-family: 'Courier New', monospace; font-size: 13px;">
+                        Digite o template para ver o preview...
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mt-3">
+                <div class="card-header" style="background: var(--success-gradient); color: white;">
+                    <h5 class="mb-0">
+                        <i class="bi bi-lightbulb-fill me-2"></i>
+                        Dicas
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <ul class="mb-0" style="font-size: 0.9rem;">
+                        <li>Use <code>{% verbatim %}{{ variavel }}{% endverbatim %}</code> para inserir variáveis</li>
+                        <li>Escolha um título descritivo</li>
+                        <li>Organize por categoria</li>
+                        <li>Teste o preview antes de salvar</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let previewTimeout;
+    const templateInput = document.getElementById('conteudo_template');
+    const previewContainer = document.getElementById('preview-container');
+
+    // Preview em tempo real
+    templateInput.addEventListener('input', function() {
+        clearTimeout(previewTimeout);
+        previewTimeout = setTimeout(updatePreview, 500);
+    });
+
+    function updatePreview() {
+        const templateContent = templateInput.value;
+        
+        if (!templateContent.trim()) {
+            previewContainer.textContent = 'Digite o template para ver o preview...';
+            return;
+        }
+
+        // Contexto de exemplo
+        const exampleContext = {
+            'nome_cliente': 'João da Silva',
+            'numero_chamado': 'CHM-2025-12345',
+            'email_suporte': 'suporte@empresa.com',
+            'data_hoje': '20 de Novembro de 2025',
+        };
+
+        // Fazer requisição para preview
+        fetch('{% url "frases:preview_template" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify({
+                template: templateContent,
+                context: exampleContext
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                previewContainer.textContent = data.rendered;
+            } else {
+                previewContainer.innerHTML = `<span style="color: #f5576c;"><i class="bi bi-exclamation-triangle me-1"></i>Erro: ${data.error}</span>`;
+            }
+        })
+        .catch(error => {
+            previewContainer.innerHTML = `<span style="color: #f5576c;"><i class="bi bi-exclamation-triangle me-1"></i>Erro ao gerar preview</span>`;
+        });
+    }
+
+    // Preview inicial se estiver editando
+    {% if fraseologia %}
+    updatePreview();
+    {% endif %}
+
+    // Validação do formulário
+    document.getElementById('fraseologia-form').addEventListener('submit', function(e) {
+        const titulo = document.getElementById('titulo').value.trim();
+        const categoria = document.getElementById('categoria').value;
+        const conteudo = document.getElementById('conteudo_template').value.trim();
+
+        if (!titulo || !categoria || !conteudo) {
+            e.preventDefault();
+            alert('Por favor, preencha todos os campos obrigatórios.');
+            return false;
+        }
+    });
+
+    // Animação de entrada
+    document.addEventListener('DOMContentLoaded', function() {
+        const cards = document.querySelectorAll('.card');
+        cards.forEach((card, index) => {
+            setTimeout(() => {
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(20px)';
+                card.style.transition = 'all 0.5s ease';
+                setTimeout(() => {
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                }, 50);
+            }, index * 100);
+        });
+    });
+</script>
+{% endblock %}

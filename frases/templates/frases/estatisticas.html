@@ -1,0 +1,211 @@
+{% extends "base.html" %}
+
+{% block title %}
+    {{ titulo }} - Gerenciador de Fraseologias
+{% endblock %}
+
+{% block page_title %}
+    <i class="bi bi-bar-chart-fill me-2"></i>{{ titulo }}
+{% endblock %}
+
+{% block content %}
+    <div class="row mb-4 fade-in">
+        <div class="col-md-6 mb-3">
+            <div class="stat-card" style="background: var(--primary-gradient);">
+                <i class="bi bi-chat-quote-fill" style="font-size: 3rem; opacity: 0.3;"></i>
+                <h3>{{ total_fraseologias }}</h3>
+                <p>Total de Fraseologias</p>
+            </div>
+        </div>
+        <div class="col-md-6 mb-3">
+            <div class="stat-card" style="background: var(--secondary-gradient);">
+                <i class="bi bi-folder-fill" style="font-size: 3rem; opacity: 0.3;"></i>
+                <h3>{{ total_categorias }}</h3>
+                <p>Total de Categorias</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="row fade-in">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header" style="background: var(--success-gradient); color: white;">
+                    <h5 class="mb-0">
+                        <i class="bi bi-pie-chart-fill me-2"></i>
+                        Distribuição por Categoria
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th><i class="bi bi-folder-fill me-2"></i>Categoria</th>
+                                    <th class="text-center"><i class="bi bi-hash me-2"></i>Quantidade</th>
+                                    <th><i class="bi bi-bar-chart-line me-2"></i>Porcentagem</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for cat in categorias_stats %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ cat.nome }}</strong>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="badge-gradient">{{ cat.total }}</span>
+                                    </td>
+                                    <td>
+                                        <div class="progress" style="height: 25px;">
+                                            <div class="progress-bar" role="progressbar" 
+                                                 style="width: {% if total_fraseologias > 0 %}{{ cat.total|floatformat:0|add:'0' }}{% else %}0{% endif %}%; background: var(--primary-gradient);"
+                                                 aria-valuenow="{{ cat.total }}" aria-valuemin="0" aria-valuemax="{{ total_fraseologias }}">
+                                                {% if total_fraseologias > 0 %}
+                                                    {% widthratio cat.total total_fraseologias 100 %}%
+                                                {% else %}
+                                                    0%
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="3" class="text-center text-muted">
+                                        <i class="bi bi-inbox me-2"></i>
+                                        Nenhuma categoria cadastrada
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4 fade-in">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header" style="background: var(--primary-gradient); color: white;">
+                    <h5 class="mb-0">
+                        <i class="bi bi-graph-up me-2"></i>
+                        Visualização Gráfica
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="categoryChart" height="80"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4 fade-in">
+        <div class="col-md-12 text-center">
+            <a href="{% url 'frases:lista_fraseologias' %}" class="btn btn-gradient">
+                <i class="bi bi-arrow-left me-1"></i>
+                Voltar para Lista
+            </a>
+            <a href="{% url 'frases:criar_fraseologia' %}" class="btn btn-gradient-secondary">
+                <i class="bi bi-plus-circle-fill me-1"></i>
+                Nova Fraseologia
+            </a>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+    // Dados para o gráfico
+    const categorias = [
+        {% for cat in categorias_stats %}
+            '{{ cat.nome }}',
+        {% endfor %}
+    ];
+
+    const valores = [
+        {% for cat in categorias_stats %}
+            {{ cat.total }},
+        {% endfor %}
+    ];
+
+    // Cores gradientes
+    const colors = [
+        'rgba(102, 126, 234, 0.8)',
+        'rgba(118, 75, 162, 0.8)',
+        'rgba(240, 147, 251, 0.8)',
+        'rgba(245, 87, 108, 0.8)',
+        'rgba(79, 172, 254, 0.8)',
+        'rgba(0, 242, 254, 0.8)',
+    ];
+
+    // Criar gráfico
+    const ctx = document.getElementById('categoryChart').getContext('2d');
+    const chart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: categorias,
+            datasets: [{
+                label: 'Número de Fraseologias',
+                data: valores,
+                backgroundColor: colors,
+                borderColor: colors.map(c => c.replace('0.8', '1')),
+                borderWidth: 2,
+                borderRadius: 8,
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    padding: 12,
+                    titleFont: {
+                        size: 14
+                    },
+                    bodyFont: {
+                        size: 13
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1
+                    },
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.1)'
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false
+                    }
+                }
+            }
+        }
+    });
+
+    // Animação de entrada
+    document.addEventListener('DOMContentLoaded', function() {
+        const cards = document.querySelectorAll('.card');
+        cards.forEach((card, index) => {
+            setTimeout(() => {
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(20px)';
+                card.style.transition = 'all 0.5s ease';
+                setTimeout(() => {
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                }, 50);
+            }, index * 100);
+        });
+    });
+</script>
+{% endblock %}

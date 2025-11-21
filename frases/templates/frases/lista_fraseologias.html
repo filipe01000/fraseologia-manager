@@ -1,0 +1,199 @@
+{% extends "base.html" %}
+
+{% block page_title %}
+    {{ titulo }}
+{% endblock %}
+
+{% block sidebar_content %}
+    <li class="nav-item">
+        <a class="nav-link" href="{% url 'frases:lista_fraseologias' %}" onclick="filterByCategory('all')">
+            <i class="bi bi-list-ul me-2"></i>
+            Todas
+        </a>
+    </li>
+    {% for categoria in categorias %}
+        <li class="nav-item">
+            <a class="nav-link" href="#categoria-{{ categoria.pk }}" data-categoria="{{ categoria.pk }}">
+                <i class="bi bi-folder-fill me-2"></i>
+                {{ categoria.nome }} 
+                <span class="badge-gradient">{{ categoria.fraseologia_set.count }}</span>
+            </a>
+        </li>
+    {% endfor %}
+{% endblock %}
+
+{% block content %}
+    <div class="row mb-4 fade-in">
+        <div class="col-md-4 mb-3">
+            <div class="stat-card">
+                <h3>{{ total_fraseologias }}</h3>
+                <p><i class="bi bi-chat-quote me-2"></i>Fraseologias</p>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="stat-card" style="background: var(--secondary-gradient);">
+                <h3>{{ total_categorias }}</h3>
+                <p><i class="bi bi-folder me-2"></i>Categorias</p>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="stat-card" style="background: var(--success-gradient);">
+                <h3 id="filtered-count">{{ total_fraseologias }}</h3>
+                <p><i class="bi bi-funnel me-2"></i>Filtradas</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="search-box fade-in">
+        <i class="bi bi-search"></i>
+        <input type="text" id="search-input" class="form-control" placeholder="Buscar fraseologias em tempo real...">
+    </div>
+
+    <div class="mb-3 fade-in">
+        <select id="category-filter" class="form-select" style="background: var(--card-color); color: var(--text-color); border-color: var(--border-color);">
+            <option value="">Todas as categorias</option>
+            {% for categoria in categorias %}
+                <option value="{{ categoria.pk }}">{{ categoria.nome }}</option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <div id="results-container">
+        {% for categoria in categorias %}
+            <div id="categoria-{{ categoria.pk }}" class="mb-5 fade-in categoria-section" data-categoria="{{ categoria.pk }}">
+                <h2 class="mb-3">
+                    <i class="bi bi-folder-fill me-2" style="background: var(--primary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent;"></i>
+                    {{ categoria.nome }}
+                </h2>
+                {% if categoria.fraseologia_set.all %}
+                    <div class="row">
+                        {% for fraseologia in categoria.fraseologia_set.all %}
+                            <div class="col-md-6 mb-3 fraseologia-item" data-categoria="{{ categoria.pk }}" data-titulo="{{ fraseologia.titulo|lower }}" data-id="{{ fraseologia.pk }}">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h5 class="card-title">
+                                            <i class="bi bi-chat-left-quote-fill me-2"></i>
+                                            {{ fraseologia.titulo }}
+                                        </h5>
+                                        <p class="card-text text-muted small">
+                                            {{ fraseologia.conteudo_template|truncatewords:15 }}
+                                        </p>
+                                        <div class="d-flex gap-2">
+                                            <a href="{% url 'frases:detalhe_fraseologia' fraseologia.pk %}" class="btn btn-gradient btn-sm">
+                                                <i class="bi bi-eye-fill me-1"></i>
+                                                Visualizar
+                                            </a>
+                                            <a href="{% url 'frases:editar_fraseologia' fraseologia.pk %}" class="btn btn-gradient-secondary btn-sm">
+                                                <i class="bi bi-pencil-fill me-1"></i>
+                                                Editar
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle me-2"></i>
+                        Nenhuma fraseologia nesta categoria.
+                    </div>
+                {% endif %}
+            </div>
+        {% empty %}
+            <div class="alert alert-warning fade-in">
+                <i class="bi bi-exclamation-triangle me-2"></i>
+                Nenhuma categoria ou fraseologia cadastrada. 
+                <a href="{% url 'frases:criar_fraseologia' %}" class="alert-link">Criar primeira fraseologia</a>
+            </div>
+        {% endfor %}
+    </div>
+
+    <div id="no-results" class="alert alert-warning fade-in" style="display: none;">
+        <i class="bi bi-search me-2"></i>
+        Nenhuma fraseologia encontrada com os critérios de busca.
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let searchTimeout;
+    const searchInput = document.getElementById('search-input');
+    const categoryFilter = document.getElementById('category-filter');
+    const resultsContainer = document.getElementById('results-container');
+    const noResults = document.getElementById('no-results');
+    const filteredCount = document.getElementById('filtered-count');
+
+    // Busca em tempo real
+    searchInput.addEventListener('input', function() {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(performSearch, 300);
+    });
+
+    categoryFilter.addEventListener('change', performSearch);
+
+    function performSearch() {
+        const query = searchInput.value.toLowerCase();
+        const categoryId = categoryFilter.value;
+        
+        const items = document.querySelectorAll('.fraseologia-item');
+        const sections = document.querySelectorAll('.categoria-section');
+        let visibleCount = 0;
+
+        items.forEach(item => {
+            const titulo = item.getAttribute('data-titulo');
+            const itemCategoria = item.getAttribute('data-categoria');
+            
+            let matchQuery = query === '' || titulo.includes(query);
+            let matchCategory = categoryId === '' || itemCategoria === categoryId;
+            
+            if (matchQuery && matchCategory) {
+                item.style.display = 'block';
+                visibleCount++;
+            } else {
+                item.style.display = 'none';
+            }
+        });
+
+        // Mostrar/ocultar seções de categoria
+        sections.forEach(section => {
+            const sectionCategoria = section.getAttribute('data-categoria');
+            const visibleItems = section.querySelectorAll('.fraseologia-item[style="display: block;"]').length;
+            
+            if (categoryId === '' || sectionCategoria === categoryId) {
+                section.style.display = visibleItems > 0 ? 'block' : 'none';
+            } else {
+                section.style.display = 'none';
+            }
+        });
+
+        // Atualizar contador
+        filteredCount.textContent = visibleCount;
+
+        // Mostrar mensagem de "sem resultados"
+        if (visibleCount === 0) {
+            resultsContainer.style.display = 'none';
+            noResults.style.display = 'block';
+        } else {
+            resultsContainer.style.display = 'block';
+            noResults.style.display = 'none';
+        }
+    }
+
+    // Animação de entrada
+    document.addEventListener('DOMContentLoaded', function() {
+        const cards = document.querySelectorAll('.card');
+        cards.forEach((card, index) => {
+            setTimeout(() => {
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(20px)';
+                card.style.transition = 'all 0.5s ease';
+                setTimeout(() => {
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                }, 50);
+            }, index * 50);
+        });
+    });
+</script>
+{% endblock %}

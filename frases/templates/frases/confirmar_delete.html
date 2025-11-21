@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block title %}
+    {{ titulo }} - Gerenciador de Fraseologias
+{% endblock %}
+
+{% block page_title %}
+    <i class="bi bi-exclamation-triangle-fill me-2"></i>{{ titulo }}
+{% endblock %}
+
+{% block content %}
+    <div class="row justify-content-center fade-in">
+        <div class="col-md-6">
+            <div class="card border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-trash-fill me-2"></i>
+                        Confirmar Exclusão
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="mb-3">
+                        <i class="bi bi-info-circle-fill me-2"></i>
+                        Você tem certeza que deseja deletar a fraseologia:
+                    </p>
+                    <div class="alert alert-warning">
+                        <strong>{{ fraseologia.titulo }}</strong>
+                        <br>
+                        <small class="text-muted">Categoria: {{ fraseologia.categoria.nome }}</small>
+                    </div>
+                    <p class="text-danger">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                        <strong>Esta ação não pode ser desfeita!</strong>
+                    </p>
+
+                    <form method="post" class="d-flex gap-2">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger">
+                            <i class="bi bi-trash-fill me-1"></i>
+                            Sim, Deletar
+                        </button>
+                        <a href="{% url 'frases:detalhe_fraseologia' fraseologia.pk %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-x-circle me-1"></i>
+                            Cancelar
+                        </a>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Animação de entrada
+    document.addEventListener('DOMContentLoaded', function() {
+        const card = document.querySelector('.card');
+        card.style.opacity = '0';
+        card.style.transform = 'scale(0.9)';
+        card.style.transition = 'all 0.5s ease';
+        setTimeout(() => {
+            card.style.opacity = '1';
+            card.style.transform = 'scale(1)';
+        }, 100);
+    });
+</script>
+{% endblock %}

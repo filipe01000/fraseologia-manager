@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+
+{% block title %}
+    {{ fraseologia.titulo }} - Gerenciador de Fraseologias
+{% endblock %}
+
+{% block page_title %}
+    <i class="bi bi-chat-quote-fill me-2"></i>{{ fraseologia.titulo }}
+{% endblock %}
+
+{% block content %}
+    <div class="row fade-in">
+        <div class="col-md-12 mb-3">
+            <div class="d-flex gap-2 mb-3">
+                <a href="{% url 'frases:lista_fraseologias' %}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left me-1"></i>
+                    Voltar
+                </a>
+                <a href="{% url 'frases:editar_fraseologia' fraseologia.pk %}" class="btn btn-gradient">
+                    <i class="bi bi-pencil-fill me-1"></i>
+                    Editar
+                </a>
+                <a href="{% url 'frases:deletar_fraseologia' fraseologia.pk %}" class="btn btn-danger">
+                    <i class="bi bi-trash-fill me-1"></i>
+                    Deletar
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row fade-in">
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header" style="background: var(--primary-gradient); color: white;">
+                    <h5 class="mb-0">
+                        <i class="bi bi-info-circle-fill me-2"></i>
+                        Informações
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p><strong><i class="bi bi-folder-fill me-2"></i>Categoria:</strong> {{ fraseologia.categoria.nome }}</p>
+                    <p><strong><i class="bi bi-calendar-plus me-2"></i>Criado em:</strong> {{ fraseologia.data_criacao|date:"d/m/Y H:i" }}</p>
+                    <p><strong><i class="bi bi-calendar-check me-2"></i>Atualizado em:</strong> {{ fraseologia.data_atualizacao|date:"d/m/Y H:i" }}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header" style="background: var(--secondary-gradient); color: white;">
+                    <h5 class="mb-0">
+                        <i class="bi bi-code-square me-2"></i>
+                        Variáveis de Exemplo
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <pre class="mb-0" style="background: var(--bg-color); padding: 15px; border-radius: 8px; color: var(--text-color);">{% for key, value in exemplo_contexto.items %}{{ key }}: {{ value }}
+{% endfor %}</pre>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row fade-in">
+        <div class="col-md-12">
+            <div class="card shadow-lg">
+                <div class="card-header d-flex justify-content-between align-items-center" style="background: var(--success-gradient); color: white;">
+                    <h5 class="mb-0">
+                        <i class="bi bi-file-text-fill me-2"></i>
+                        Conteúdo Renderizado
+                    </h5>
+                    <button class="btn btn-light btn-sm" id="btn-copiar">
+                        <i class="bi bi-clipboard me-1"></i>
+                        Copiar
+                    </button>
+                </div>
+                <div class="card-body p-0">
+                    <textarea id="conteudo-fraseologia" class="form-control border-0" rows="15" readonly style="resize: vertical; font-family: 'Courier New', monospace; font-size: 14px; background: var(--card-color); color: var(--text-color);">{{ rendered_content }}</textarea>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4 fade-in">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header" style="background: var(--primary-gradient); color: white;">
+                    <h5 class="mb-0">
+                        <i class="bi bi-code-slash me-2"></i>
+                        Template Original
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <pre style="background: var(--bg-color); padding: 15px; border-radius: 8px; color: var(--text-color); white-space: pre-wrap;">{{ fraseologia.conteudo_template }}</pre>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast notification -->
+    <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+        <div id="copyToast" class="toast align-items-center text-white border-0" role="alert" aria-live="assertive" aria-atomic="true" style="background: var(--success-gradient);">
+            <div class="d-flex">
+                <div class="toast-body">
+                    <i class="bi bi-check-circle-fill me-2"></i>
+                    Conteúdo copiado com sucesso!
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.getElementById('btn-copiar').addEventListener('click', function() {
+        const textarea = document.getElementById('conteudo-fraseologia');
+        textarea.select();
+        textarea.setSelectionRange(0, 99999); // Para dispositivos móveis
+
+        // Usar API moderna de clipboard
+        navigator.clipboard.writeText(textarea.value).then(() => {
+            // Mostrar toast
+            const toastEl = document.getElementById('copyToast');
+            const toast = new bootstrap.Toast(toastEl);
+            toast.show();
+
+            // Animação do botão
+            const btn = this;
+            const originalHTML = btn.innerHTML;
+            btn.innerHTML = '<i class="bi bi-check-circle-fill me-1"></i> Copiado!';
+            btn.classList.add('btn-success');
+            btn.classList.remove('btn-light');
+
+            setTimeout(() => {
+                btn.innerHTML = originalHTML;
+                btn.classList.remove('btn-success');
+                btn.classList.add('btn-light');
+            }, 2000);
+        }).catch(err => {
+            console.error('Erro ao copiar:', err);
+            alert('Erro ao copiar o conteúdo. Tente novamente.');
+        });
+    });
+
+    // Animação de entrada
+    document.addEventListener('DOMContentLoaded', function() {
+        const cards = document.querySelectorAll('.card');
+        cards.forEach((card, index) => {
+            setTimeout(() => {
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(20px)';
+                card.style.transition = 'all 0.5s ease';
+                setTimeout(() => {
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                }, 50);
+            }, index * 100);
+        });
+    });
+</script>
+{% endblock %}
